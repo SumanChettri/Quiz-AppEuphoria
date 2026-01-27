@@ -18,20 +18,24 @@ const Home = () => {
 
   // this initiates quiz after selection of preferences
   const handleStart = () => {
-    // sets the started value to true
-    dispatch({ type: "isStarted" });
     // filters the questions based on users choices
     let filterData = questionsData.filter(
       (data) =>
         data.info.categorie === state.options.categorie &&
         data.info.mode === state.options.mode
     );
-    // slices number of questions either to 5 or 10
-    if (state.options.quantity === 5) filterData = filterData.slice(0, 5);
-    else if (state.options.quantity === 10)
-      filterData = filterData.slice(0, 10);
+    // slices number of questions based on selected quantity
+    const quantity = parseInt(state.options.quantity);
+    if (quantity === 5) filterData = filterData.slice(0, 5);
+    else if (quantity === 10) filterData = filterData.slice(0, 10);
+    else if (quantity === 15) filterData = filterData.slice(0, 15);
+    else if (quantity === 20) filterData = filterData.slice(0, 20);
     // updates the default question data
     dispatch({ type: "filteredQuestion", filterData: filterData });
+    // Calculate time limit: 60 seconds per question
+    const timeLimit = quantity * 60;
+    // sets the started value to true with timer
+    dispatch({ type: "isStarted", timeLimit: timeLimit });
   };
 
   // this function handles single choice click
@@ -78,10 +82,15 @@ const Home = () => {
 
   return (
     <div>
-      <header className="bg-blue-600 text-white py-4 shadow-md">
+      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-600 text-white py-5 shadow-lg">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <h1 className="font-bold text-3xl">Trivia</h1>
-          <Link to="/about" className="font-bold text-xl">
+          <Link to="/" className="font-bold text-3xl tracking-tight hover:text-blue-200 transition-colors">
+            Programming Quiz
+          </Link>
+          <Link 
+            to="/about" 
+            className="font-semibold text-lg hover:text-blue-200 transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-white/10"
+          >
             About
           </Link>
         </div>
@@ -96,6 +105,7 @@ const Home = () => {
             handleRetryBtn,
             handleCheckBtn,
             state,
+            dispatch,
           }}
         >
           <Quiz />

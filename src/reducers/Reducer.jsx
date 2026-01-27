@@ -5,6 +5,8 @@ export const initialValue = {
   isCheck: false,
   userAnswer: [],
   isStarted: false,
+  timeRemaining: null,
+  startTime: null,
   options: {
     categorie: "javascript",
     quantity: 5,
@@ -28,6 +30,8 @@ export const reducer = (state, action) => {
       return {
         ...state,
         isStarted: true,
+        startTime: Date.now(),
+        timeRemaining: action.timeLimit || null,
       };
     case "filteredQuestion":
       return {
@@ -58,6 +62,11 @@ export const reducer = (state, action) => {
       return {
         ...state,
         currentQuestionIndex: ++state.currentQuestionIndex,
+      };
+    case "updateTime":
+      return {
+        ...state,
+        timeRemaining: action.timeRemaining,
       };
     case "reset":
       return initialValue;
