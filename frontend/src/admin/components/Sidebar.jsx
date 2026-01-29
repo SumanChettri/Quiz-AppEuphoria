@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Users, BarChart2 } from 'react-feather';
+import { Home, Users, BarChart2, Upload } from 'react-feather';
 
 const Sidebar = () => {
   return (
@@ -40,6 +40,17 @@ const Sidebar = () => {
               >
                 <BarChart2 className="w-6 h-6" />
                 <span className="mx-4 font-medium">Analytics</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/admin/upload"
+                className={({ isActive }) =>
+                  `flex items-center px-4 py-2 mt-5 rounded-md hover:bg-gray-700 ${isActive ? 'bg-gray-700' : ''}`
+                }
+              >
+                <Upload className="w-6 h-6" />
+                <span className="mx-4 font-medium">Uploads</span>
               </NavLink>
             </li>
           </ul>

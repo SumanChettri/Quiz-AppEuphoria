@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import apiRequest from '../../utils/api';
 
 const QuizAnalytics = () => {
   const [analytics, setAnalytics] = useState(null);
@@ -8,19 +9,19 @@ const QuizAnalytics = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const response = await fetch('/api/admin/analytics/quizzes', {
+        const adminToken = localStorage.getItem('adminToken');
+        const data = await apiRequest('/admin/analytics/quizzes', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
           },
         });
-        const data = await response.json();
         if (data.success) {
           setAnalytics(data.data);
         } else {
           setError(data.message || 'Failed to fetch analytics');
         }
       } catch (err) {
-        setError('Server error. Please try again later.');
+        setError(err.message || 'Server error. Please try again later.');
       } finally {
         setLoading(false);
       }

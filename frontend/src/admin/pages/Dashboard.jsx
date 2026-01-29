@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, HelpCircle, BarChart, Activity } from 'react-feather';
+import apiRequest from '../../utils/api';
 
 const StatCard = ({ icon, label, value, color }) => (
   <div className="p-6 bg-white rounded-lg shadow-md flex items-center space-x-4 animate-fade-in-up">
@@ -21,19 +22,19 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/admin/stats', {
+        const adminToken = localStorage.getItem('adminToken');
+        const data = await apiRequest('/admin/stats', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
           },
         });
-        const data = await response.json();
-        if (data.success) {
+        if (data?.success) {
           setStats(data.data);
         } else {
-          setError(data.message || 'Failed to fetch stats');
+          setError(data?.message || 'Failed to fetch stats');
         }
       } catch (err) {
-        setError('Server error. Please try again later.');
+        setError(err.message || 'Server error. Please try again later.');
       } finally {
         setLoading(false);
       }

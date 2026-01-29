@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { authenticateAdmin } from '../middleware/adminAuth.js';
+import Question from '../models/Question.js';
 
 const router = express.Router();
 
@@ -400,6 +401,144 @@ router.get('/export/users', async (req, res) => {
       success: false,
       message: 'Server error exporting users'
     });
+  }
+});
+
+// Questions management
+router.post('/questions', async (req, res) => {
+  try {
+    const payload = req.body;
+    const isBulk = Array.isArray(payload);
+
+    const normalize = (q) => ({
+      category: (q.category || 'general').toLowerCase().trim(),
+      difficulty: (q.difficulty || '').toLowerCase().trim(),
+      question: (q.question || '').trim(),
+      options: Array.isArray(q.options) ? q.options.map((o) => (typeof o === 'string' ? o.trim() : String(o).trim())).filter(Boolean) : [],
+      answer: (q.answer || '').trim(),
+    });
+
+    const validateQuestion = (q) => {
+      const errors = {};
+      if (!q.category) errors.category = 'Category is required';
+      if (!q.difficulty || !['easy', 'medium', 'hard'].includes(q.difficulty)) errors.difficulty = 'Difficulty must be one of easy|medium|hard';
+      if (!q.question) errors.question = 'Question is required';
+      if (!Array.isArray(q.options) || q.options.filter(Boolean).length < 2) errors.options = 'At least two options are required';
+      if (!q.answer) errors.answer = 'Answer is required';
+      else if (!q.options.includes(q.answer)) errors.answer = 'Answer must be one of the options';
+      return errors;
+    };
+
+    if (isBulk) {
+      if (payload.length === 0) {
+        return res.status(400).json({ success: false, message: 'Empty array' });
+      }
+      const docs = payload.map(normalize);
+      const errors = docs.map(validateQuestion);
+      const hasErrors = errors.some((e) => Object.keys(e).length > 0);
+      if (hasErrors) {
+        return res.status(400).json({ success: false, message: 'Validation failed', data: { errors } });
+      }
+      const created = await Question.insertMany(docs, { ordered: true });
+      return res.status(201).json({ success: true, message: 'Questions created', data: { count: created.length } });
+    } else {
+      const doc = normalize(payload);
+      const errors = validateQuestion(doc);
+      if (Object.keys(errors).length > 0) {
+        return res.status(400).json({ success: false, message: 'Validation failed', data: { errors } });
+      }
+      const created = await Question.create(doc);
+      return res.status(201).json({ success: true, message: 'Question created', data: { questionId: created._id } });
+    }
+  } catch (error) {
+    // Single log entry to avoid spam
+    console.error('Create questions error:', error?.message || error);
+    // Map Mongoose validation errors to 400-level
+    if (error?.name === 'ValidationError') {
+      const details = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({ success: false, message: 'Validation error', data: { errors: details } });
+    }
+    res.status(500).json({ success: false, message: 'Server error creating questions' });
+  }
+});
+
+router.get('/questions', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const category = (req.query.category || '').toLowerCase();
+    const search = req.query.search || '';
+
+    const query = {};
+    if (category) query.category = category;
+    if (search) query.question = { $regex: search, $options: 'i' };
+
+    const questions = await Question.find(query)
+      .select('+answer') // admin can see answers
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit);
+
+    const total = await Question.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: {
+        questions,
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      },
+    });
+  } catch (error) {
+    console.error('List questions error:', error?.message || error);
+    res.status(500).json({ success: false, message: 'Server error listing questions' });
+  }
+});
+
+router.put('/questions/:id', async (req, res) => {
+  try {
+    const updates = req.body;
+    if (updates.category) updates.category = updates.category.toLowerCase().trim();
+    if (updates.options) updates.options = updates.options.map(o => String(o).trim());
+    if (updates.question) updates.question = updates.question.trim();
+    if (updates.answer) updates.answer = String(updates.answer).trim();
+
+    const updated = await Question.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
+    if (!updated) return res.status(404).json({ success: false, message: 'Question not found' });
+    res.json({ success: true, message: 'Question updated', data: { question: updated } });
+  } catch (error) {
+    console.error('Update question error:', error);
+    res.status(500).json({ success: false, message: 'Server error updating question' });
+  }
+});
+
+router.delete('/questions/:id', async (req, res) => {
+  try {
+    const deleted = await Question.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ success: false, message: 'Question not found' });
+    res.json({ success: true, message: 'Question deleted' });
+  } catch (error) {
+    console.error('Delete question error:', error);
+    res.status(500).json({ success: false, message: 'Server error deleting question' });
+  }
+});
+
+// Public fetch for client-side quiz (no auth)
+router.get('/public/questions', async (req, res) => {
+  try {
+    const category = (req.query.category || '').toLowerCase();
+    const difficulty = (req.query.difficulty || '').toLowerCase();
+    const limit = parseInt(req.query.limit) || 10;
+    const query = {};
+    if (category) query.category = category;
+    if (['easy','medium','hard'].includes(difficulty)) query.difficulty = difficulty;
+    const questions = await Question.find(query)
+      .select('-answer') // ensure answer never exposed
+      .sort({ createdAt: -1 })
+      .limit(limit);
+    res.json({ success: true, data: { questions } });
+  } catch (error) {
+    console.error('Public questions error:', error?.message || error);
+    res.status(500).json({ success: false, message: 'Server error fetching questions' });
   }
 });
 

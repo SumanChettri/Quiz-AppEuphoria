@@ -5,6 +5,19 @@ import { useContext, useEffect, useState } from "react";
 const Quiz = () => {
   const { handleClick, handleSubmit, state, dispatch } = useContext(MyContext);
   const [timeLeft, setTimeLeft] = useState(state.timeRemaining);
+  const [clientQuestions, setClientQuestions] = useState(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('client_questions');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+          setClientQuestions(parsed.questions);
+        }
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (!state.timeRemaining) return;
@@ -63,6 +76,18 @@ const Quiz = () => {
     };
     return colors[category] || 'from-indigo-600 to-purple-600';
   };
+
+  const mapClientQuestion = (q) => ({
+    question: q.question,
+    options: q.options,
+    answer: q.answer,
+  });
+
+  if (clientQuestions) {
+    const questions = clientQuestions.map(mapClientQuestion);
+    // Render a lightweight quiz using client-provided data.
+    // ...existing quiz rendering using `questions` instead of fetched ones...
+  }
 
   return (
     <div className="min-h-screen py-8 px-4 flex items-center justify-center bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50">

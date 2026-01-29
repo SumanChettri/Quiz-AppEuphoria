@@ -21,11 +21,17 @@ const App = () => {
 
   return (
     <>
+      {/* Navbar should always render */}
       <Navbar onOpenAuth={handleOpenAuth} />
       <Routes>
+        {/* Default index route for base path */}
+        <Route index element={<Home />} />
+        {/* Explicit root route */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/admin/*" element={<AdminRoutes />} />
+        {/* Fallback for any unmatched route to avoid blank page */}
+        <Route path="*" element={<Home />} />
       </Routes>
       <AuthModal open={authOpen} mode={authMode} onClose={handleCloseAuth} />
     </>

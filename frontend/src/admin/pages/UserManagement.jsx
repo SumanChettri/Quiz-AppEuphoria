@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Edit, Trash2, Search } from 'react-feather';
+import apiRequest from '../../utils/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -13,13 +14,14 @@ const UserManagement = () => {
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
-      const response = await fetch(`/api/admin/users?page=${page}&limit=${limit}&search=${search}&role=${role}`, {
+      const adminToken = localStorage.getItem('adminToken');
+      const data = await apiRequest(`/admin/users?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}&role=${role}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
         },
       });
-      const data = await response.json();
       if (data.success) {
         setUsers(data.data.users);
         setPagination(data.data.pagination);
@@ -27,7 +29,7 @@ const UserManagement = () => {
         setError(data.message || 'Failed to fetch users');
       }
     } catch (err) {
-      setError('Server error. Please try again later.');
+      setError(err.message || 'Server error. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -40,20 +42,20 @@ const UserManagement = () => {
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        const response = await fetch(`/api/admin/users/${userId}`, {
+        const adminToken = localStorage.getItem('adminToken');
+        const data = await apiRequest(`/admin/users/${userId}`, {
           method: 'DELETE',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+            Authorization: adminToken ? `Bearer ${adminToken}` : undefined,
           },
         });
-        const data = await response.json();
         if (data.success) {
           fetchUsers();
         } else {
           alert(data.message || 'Failed to delete user');
         }
       } catch (err) {
-        alert('Server error. Please try again later.');
+        alert(err.message || 'Server error. Please try again later.');
       }
     }
   };
