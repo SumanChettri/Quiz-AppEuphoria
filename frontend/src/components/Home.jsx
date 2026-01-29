@@ -1,7 +1,6 @@
 import { questionsData } from ".";
 import Quiz from "./Quiz";
 import StartPage from "./StartPage";
-import { Link } from "react-router-dom";
 import MyContext from "../contexts/Context";
 import { useReducer } from "react";
 import { reducer, initialValue } from "../reducers/Reducer";
@@ -82,20 +81,6 @@ const Home = () => {
 
   return (
     <div>
-      <header className="bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-600 text-white py-5 shadow-lg">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <Link to="/" className="font-bold text-3xl tracking-tight hover:text-blue-200 transition-colors">
-            Programming Quiz
-          </Link>
-          <Link 
-            to="/about" 
-            className="font-semibold text-lg hover:text-blue-200 transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-white/10"
-          >
-            About
-          </Link>
-        </div>
-      </header>
-
       {/* if start button is clicked render Quiz component else StartPage */}
       {state.isStarted ? (
         <MyContext.Provider

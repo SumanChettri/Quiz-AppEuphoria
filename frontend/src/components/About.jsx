@@ -1,22 +1,8 @@
 import { Link } from "react-router-dom";
-import {Github, Linkedin, Reddit} from "../assets"
+import { Github, Linkedin, Reddit } from "../assets";
 const About = () => {
   return (
-    <>
-      <header className="bg-gradient-to-r from-emerald-600 via-green-500 to-teal-600 text-white py-5 shadow-lg">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <Link to="/" className="font-bold text-3xl tracking-tight hover:text-emerald-200 transition-colors">
-            Programming Quiz
-          </Link>
-          <Link 
-            to="/about" 
-            className="font-semibold text-lg hover:text-emerald-200 transition-colors duration-200 px-4 py-2 rounded-lg hover:bg-white/10"
-          >
-            About
-          </Link>
-        </div>
-      </header>
-      
+    <>      
       <div className="min-h-screen py-12 px-4">
         <div className="w-full max-w-4xl mx-auto animate-fade-in">
           <div className="glass-effect card-shadow-lg rounded-2xl p-8 md:p-10">
